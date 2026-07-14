@@ -7,44 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #050505; color: #ffffff; font-family: sans-serif; }
-        .market-card { background: #0a0a0a; border-left: 4px solid #333; }
-        .clock-wrapper { width: 80px; height: 80px; }
+        .market-card { background: #0a0a0a; border-left: 4px solid #333; height: 100%; }
+        .clock-wrapper { width: 110px; height: 110px; }
         .clock-svg { width: 100%; height: 100%; }
-        /* Las manecillas están dentro de grupos G, rotamos el grupo */
         .hand-group { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hour-hand { stroke: #ffffff; stroke-width: 4; stroke-linecap: round; }
-        .min-hand { stroke: #e5e7eb; stroke-width: 2.5; stroke-linecap: round; }
+        .hour-hand { stroke: #4b5563; stroke-width: 4; stroke-linecap: round; }
+        .min-hand { stroke: #d1d5db; stroke-width: 2.5; stroke-linecap: round; }
         .sec-hand { stroke: #ef4444; stroke-width: 1.5; stroke-linecap: round; }
-        .tick { stroke: #6b7280; stroke-width: 1.5; }
+        .tick-hour { stroke: #ffffff; stroke-width: 2; }
+        .tick-min { stroke: #6b7280; stroke-width: 1.5; }
     </style>
 </head>
-<body class="p-4">
-    <header class="mb-6 border-b border-gray-900 pb-4">
-        <h1 class="text-lg font-semibold">Mercados Globales</h1>
-        <select id="user-tz" class="bg-[#111] text-xs border border-gray-800 p-2 rounded mt-2 w-full text-white">
-            <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
-            <option value="UTC">UTC (GMT+0)</option>
-            <option value="America/New_York">New York (EST)</option>
-            <option value="Europe/London">London (GMT)</option>
-            <option value="Asia/Tokyo">Tokyo (JST)</option>
-        </select>
+<body class="p-1">
+    <header class="mb-2 border-b border-gray-900 pb-2 px-2">
+        <h1 class="text-xl font-bold">Mercados Globales</h1>
     </header>
 
-    <div id="clock-grid" class="space-y-3"></div>
+    <div id="clock-grid" class="grid grid-cols-2 gap-1 px-1"></div>
 
     <script>
         const markets = [
-            { name: "New York", tz: "America/New_York" },
-            { name: "London", tz: "Europe/London" },
-            { name: "Tokyo", tz: "Asia/Tokyo" },
-            { name: "Sydney", tz: "Australia/Sydney" }
+            { name: "NYSE", tz: "America/New_York", open: "09:30", close: "16:00" },
+            { name: "LSE", tz: "Europe/London", open: "08:00", close: "16:30" },
+            { name: "TSE", tz: "Asia/Tokyo", open: "09:00", close: "15:00" },
+            { name: "ASX", tz: "Australia/Sydney", open: "10:00", close: "16:00" }
         ];
 
         function createClocks() {
             const grid = document.getElementById('clock-grid');
             markets.forEach((m, index) => {
                 const card = document.createElement('div');
-                card.className = 'market-card p-3 rounded-r-lg flex items-center gap-4';
+                card.className = 'market-card p-2 rounded flex flex-col items-center justify-center gap-1';
                 card.innerHTML = `
                     <div class="clock-wrapper">
                         <svg class="clock-svg" viewBox="0 0 80 80">
@@ -56,12 +49,10 @@
                             <circle cx="40" cy="40" r="2" fill="#ef4444"/>
                         </svg>
                     </div>
-                    <div class="flex-grow flex justify-between items-center">
-                        <div>
-                            <h2 class="text-sm font-bold">${m.name}</h2>
-                            <p class="text-[10px] text-gray-400 uppercase">${m.tz.split('/')[1]}</p>
-                        </div>
-                        <div id="digital-${index}" class="font-mono text-lg font-bold">00:00:00</div>
+                    <div class="text-center w-full">
+                        <h2 class="text-[14px] font-bold truncate">${m.name}</h2>
+                        <p class="text-[10px] text-gray-500 uppercase">A:${m.open} C:${m.close}</p>
+                        <div id="digital-${index}" class="font-mono text-[18px] font-bold text-gray-300">00:00:00</div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -75,11 +66,11 @@
                 const angle = i * 6;
                 const isHour = i % 5 === 0;
                 const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                tick.setAttribute("x1", 40 + 34 * Math.cos(angle * Math.PI / 180));
-                tick.setAttribute("y1", 40 + 34 * Math.sin(angle * Math.PI / 180));
-                tick.setAttribute("x2", 40 + (isHour ? 38 : 36) * Math.cos(angle * Math.PI / 180));
-                tick.setAttribute("y2", 40 + (isHour ? 38 : 36) * Math.sin(angle * Math.PI / 180));
-                tick.setAttribute("class", "tick");
+                tick.setAttribute("x1", 40 + (isHour ? 32 : 35) * Math.cos(angle * Math.PI / 180));
+                tick.setAttribute("y1", 40 + (isHour ? 32 : 35) * Math.sin(angle * Math.PI / 180));
+                tick.setAttribute("x2", 40 + 38 * Math.cos(angle * Math.PI / 180));
+                tick.setAttribute("y2", 40 + 38 * Math.sin(angle * Math.PI / 180));
+                tick.setAttribute("class", isHour ? "tick-hour" : "tick-min");
                 g.appendChild(tick);
             }
         }
@@ -87,19 +78,14 @@
         function update() {
             markets.forEach((m, index) => {
                 const now = new Date(new Date().toLocaleString("en-US", { timeZone: m.tz }));
-                const h = now.getHours();
-                const min = now.getMinutes();
-                const sec = now.getSeconds();
-                
-                const hDeg = (h % 12) * 30 + min * 0.5;
-                const mDeg = min * 6 + sec * 0.1;
-                const sDeg = sec * 6;
+                const hDeg = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+                const mDeg = now.getMinutes() * 6 + now.getSeconds() * 0.1;
+                const sDeg = now.getSeconds() * 6;
 
-                // Rotamos el grupo, no la línea individual
                 document.getElementById(`group-hour-${index}`).setAttribute('transform', `rotate(${hDeg} 40 40)`);
                 document.getElementById(`group-min-${index}`).setAttribute('transform', `rotate(${mDeg} 40 40)`);
                 document.getElementById(`group-sec-${index}`).setAttribute('transform', `rotate(${sDeg} 40 40)`);
-                document.getElementById(`digital-${index}`).innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                document.getElementById(`digital-${index}`).innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             });
         }
 
