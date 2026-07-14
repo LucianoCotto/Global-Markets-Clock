@@ -8,13 +8,13 @@
     <style>
         body { background-color: #050505; color: #ffffff; font-family: sans-serif; }
         .market-card { background: #0a0a0a; border-left: 4px solid #333; }
-        /* Contenedor cuadrado garantizado */
-        .clock-wrapper { width: 80px; height: 80px; flex-shrink: 0; }
-        .clock-svg { width: 100%; height: 100%; display: block; }
-        .hand { stroke-linecap: round; transform-origin: 40px 40px; transition: transform 0.2s linear; }
-        .hour-hand { stroke: #ffffff; stroke-width: 4; }
-        .min-hand { stroke: #e5e7eb; stroke-width: 2.5; }
-        .sec-hand { stroke: #ef4444; stroke-width: 1.5; }
+        .clock-wrapper { width: 80px; height: 80px; }
+        .clock-svg { width: 100%; height: 100%; }
+        /* Las manecillas están dentro de grupos G, rotamos el grupo */
+        .hand-group { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hour-hand { stroke: #ffffff; stroke-width: 4; stroke-linecap: round; }
+        .min-hand { stroke: #e5e7eb; stroke-width: 2.5; stroke-linecap: round; }
+        .sec-hand { stroke: #ef4444; stroke-width: 1.5; stroke-linecap: round; }
         .tick { stroke: #6b7280; stroke-width: 1.5; }
     </style>
 </head>
@@ -50,9 +50,9 @@
                         <svg class="clock-svg" viewBox="0 0 80 80">
                             <circle cx="40" cy="40" r="38" stroke="#333" stroke-width="2" fill="none"/>
                             <g id="ticks-${index}"></g>
-                            <line id="hour-${index}" class="hand hour-hand" x1="40" y1="40" x2="40" y2="20"/>
-                            <line id="min-${index}" class="hand min-hand" x1="40" y1="40" x2="40" y2="12"/>
-                            <line id="sec-${index}" class="hand sec-hand" x1="40" y1="40" x2="40" y2="8"/>
+                            <g id="group-hour-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="20" class="hour-hand"/></g>
+                            <g id="group-min-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="12" class="min-hand"/></g>
+                            <g id="group-sec-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="8" class="sec-hand"/></g>
                             <circle cx="40" cy="40" r="2" fill="#ef4444"/>
                         </svg>
                     </div>
@@ -95,10 +95,10 @@
                 const mDeg = min * 6 + sec * 0.1;
                 const sDeg = sec * 6;
 
-                // Rotación directa sobre el centro 40,40
-                document.getElementById(`hour-${index}`).setAttribute('transform', `rotate(${hDeg} 40 40)`);
-                document.getElementById(`min-${index}`).setAttribute('transform', `rotate(${mDeg} 40 40)`);
-                document.getElementById(`sec-${index}`).setAttribute('transform', `rotate(${sDeg} 40 40)`);
+                // Rotamos el grupo, no la línea individual
+                document.getElementById(`group-hour-${index}`).setAttribute('transform', `rotate(${hDeg} 40 40)`);
+                document.getElementById(`group-min-${index}`).setAttribute('transform', `rotate(${mDeg} 40 40)`);
+                document.getElementById(`group-sec-${index}`).setAttribute('transform', `rotate(${sDeg} 40 40)`);
                 document.getElementById(`digital-${index}`).innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             });
         }
