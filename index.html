@@ -7,52 +7,61 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #050505; color: #ffffff; font-family: sans-serif; }
-        .market-card { background: #0a0a0a; border-left: 4px solid #333; height: 100%; }
-        .clock-wrapper { width: 110px; height: 110px; }
-        .clock-svg { width: 100%; height: 100%; }
+        .market-card { background: #0a0a0a; border-left: 4px solid #333; }
+        /* Contenedor cuadrado estricto */
+        .clock-container { 
+            width: 100%; 
+            max-width: 140px; 
+            aspect-ratio: 1 / 1; 
+            margin: 0 auto;
+            position: relative;
+        }
+        .clock-svg { width: 100%; height: 100%; display: block; }
         .hand-group { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hour-hand { stroke: #4b5563; stroke-width: 4; stroke-linecap: round; }
-        .min-hand { stroke: #d1d5db; stroke-width: 2.5; stroke-linecap: round; }
-        .sec-hand { stroke: #ef4444; stroke-width: 1.5; stroke-linecap: round; }
-        .tick-hour { stroke: #ffffff; stroke-width: 2; }
+        .hour-hand { stroke: #4b5563; stroke-width: 5; stroke-linecap: round; }
+        .min-hand { stroke: #d1d5db; stroke-width: 3; stroke-linecap: round; }
+        .sec-hand { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
+        .tick-hour { stroke: #ffffff; stroke-width: 2.5; }
         .tick-min { stroke: #6b7280; stroke-width: 1.5; }
+        .market-arc { fill: none; stroke-width: 8; stroke-linecap: butt; }
     </style>
 </head>
-<body class="p-1">
-    <header class="mb-2 border-b border-gray-900 pb-2 px-2">
-        <h1 class="text-xl font-bold">Mercados Globales</h1>
+<body class="p-2">
+    <header class="mb-4 border-b border-gray-900 pb-2 px-2">
+        <h1 class="text-2xl font-bold">Mercados Globales</h1>
     </header>
 
-    <div id="clock-grid" class="grid grid-cols-2 gap-1 px-1"></div>
+    <div id="clock-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2"></div>
 
     <script>
         const markets = [
-            { name: "NYSE", tz: "America/New_York", open: "09:30", close: "16:00" },
-            { name: "LSE", tz: "Europe/London", open: "08:00", close: "16:30" },
-            { name: "TSE", tz: "Asia/Tokyo", open: "09:00", close: "15:00" },
-            { name: "ASX", tz: "Australia/Sydney", open: "10:00", close: "16:00" }
+            { name: "NewYork", tz: "America/New_York", open: 9.5, close: 16 },
+            { name: "Europa", tz: "Europe/London", open: 8, close: 16.5 },
+            { name: "Tokio", tz: "Asia/Tokyo", open: 9, close: 15 },
+            { name: "Australia", tz: "Australia/Sydney", open: 10, close: 16 }
         ];
 
         function createClocks() {
             const grid = document.getElementById('clock-grid');
             markets.forEach((m, index) => {
                 const card = document.createElement('div');
-                card.className = 'market-card p-2 rounded flex flex-col items-center justify-center gap-1';
+                card.className = 'market-card p-4 rounded flex flex-col items-center gap-2';
                 card.innerHTML = `
-                    <div class="clock-wrapper">
-                        <svg class="clock-svg" viewBox="0 0 80 80">
-                            <circle cx="40" cy="40" r="38" stroke="#333" stroke-width="2" fill="none"/>
+                    <div class="clock-container">
+                        <svg class="clock-svg" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="40" cy="40" r="36" stroke="#222" stroke-width="8" fill="none"/>
+                            <path id="arc-${index}" class="market-arc" d=""/>
                             <g id="ticks-${index}"></g>
                             <g id="group-hour-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="20" class="hour-hand"/></g>
                             <g id="group-min-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="12" class="min-hand"/></g>
                             <g id="group-sec-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="8" class="sec-hand"/></g>
-                            <circle cx="40" cy="40" r="2" fill="#ef4444"/>
+                            <circle cx="40" cy="40" r="3" fill="#ef4444"/>
                         </svg>
                     </div>
                     <div class="text-center w-full">
-                        <h2 class="text-[14px] font-bold truncate">${m.name}</h2>
-                        <p class="text-[10px] text-gray-500 uppercase">A:${m.open} C:${m.close}</p>
-                        <div id="digital-${index}" class="font-mono text-[18px] font-bold text-gray-300">00:00:00</div>
+                        <h2 class="text-[18px] font-bold">${m.name}</h2>
+                        <p class="text-[12px] text-gray-500 uppercase font-semibold">${m.open}:00 - ${m.close}:00</p>
+                        <div id="digital-${index}" class="font-mono text-[22px] font-bold text-gray-200 mt-1">00:00:00</div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -66,10 +75,12 @@
                 const angle = i * 6;
                 const isHour = i % 5 === 0;
                 const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                tick.setAttribute("x1", 40 + (isHour ? 32 : 35) * Math.cos(angle * Math.PI / 180));
-                tick.setAttribute("y1", 40 + (isHour ? 32 : 35) * Math.sin(angle * Math.PI / 180));
-                tick.setAttribute("x2", 40 + 38 * Math.cos(angle * Math.PI / 180));
-                tick.setAttribute("y2", 40 + 38 * Math.sin(angle * Math.PI / 180));
+                const r1 = isHour ? 30 : 33;
+                const r2 = 36;
+                tick.setAttribute("x1", 40 + r1 * Math.cos(angle * Math.PI / 180));
+                tick.setAttribute("y1", 40 + r1 * Math.sin(angle * Math.PI / 180));
+                tick.setAttribute("x2", 40 + r2 * Math.cos(angle * Math.PI / 180));
+                tick.setAttribute("y2", 40 + r2 * Math.sin(angle * Math.PI / 180));
                 tick.setAttribute("class", isHour ? "tick-hour" : "tick-min");
                 g.appendChild(tick);
             }
@@ -78,6 +89,17 @@
         function update() {
             markets.forEach((m, index) => {
                 const now = new Date(new Date().toLocaleString("en-US", { timeZone: m.tz }));
+                const h = now.getHours() + now.getMinutes()/60;
+                
+                const isOpen = h >= m.open && h < m.close;
+                const arc = document.getElementById(`arc-${index}`);
+                arc.setAttribute("stroke", isOpen ? "#22c55e" : "#ef4444");
+                arc.setAttribute("stroke-opacity", isOpen ? "0.9" : "0.2");
+
+                const startAngle = (m.open * 30) - 90;
+                const endAngle = (m.close * 30) - 90;
+                arc.setAttribute("d", describeArc(40, 40, 36, startAngle, endAngle));
+
                 const hDeg = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
                 const mDeg = now.getMinutes() * 6 + now.getSeconds() * 0.1;
                 const sDeg = now.getSeconds() * 6;
@@ -87,6 +109,16 @@
                 document.getElementById(`group-sec-${index}`).setAttribute('transform', `rotate(${sDeg} 40 40)`);
                 document.getElementById(`digital-${index}`).innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             });
+        }
+
+        function describeArc(x, y, r, start, end) {
+            const startR = start * Math.PI / 180;
+            const endR = end * Math.PI / 180;
+            const x1 = x + r * Math.cos(startR);
+            const y1 = y + r * Math.sin(startR);
+            const x2 = x + r * Math.cos(endR);
+            const y2 = y + r * Math.sin(endR);
+            return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`;
         }
 
         createClocks();
