@@ -5,63 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Market Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@300;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #050505; color: #ffffff; font-family: sans-serif; }
-        .market-card { background: #0a0a0a; border-left: 4px solid #333; }
-        /* Contenedor cuadrado estricto */
-        .clock-container { 
-            width: 100%; 
-            max-width: 140px; 
-            aspect-ratio: 1 / 1; 
-            margin: 0 auto;
-            position: relative;
-        }
-        .clock-svg { width: 100%; height: 100%; display: block; }
+        body { background-color: #050505; color: #F2E8CF; font-family: 'Inter', sans-serif; }
+        .market-card { background: #0a0a0a; border: 1px solid #1a1a1a; }
+        .clock-container { width: 100%; max-width: 140px; aspect-ratio: 1 / 1; margin: 0 auto; }
+        .tech-font-bold { font-family: 'IBM Plex Sans Devanagari', sans-serif; font-weight: 700; }
+        .tech-font-light { font-family: 'IBM Plex Sans Devanagari', sans-serif; font-weight: 300; }
         .hand-group { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hour-hand { stroke: #4b5563; stroke-width: 5; stroke-linecap: round; }
-        .min-hand { stroke: #d1d5db; stroke-width: 3; stroke-linecap: round; }
-        .sec-hand { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
-        .tick-hour { stroke: #ffffff; stroke-width: 2.5; }
-        .tick-min { stroke: #6b7280; stroke-width: 1.5; }
+        .hour-hand { stroke: #F2E8CF; stroke-width: 5; stroke-linecap: round; }
+        .min-hand { stroke: #F2E8CF; stroke-width: 3; stroke-linecap: round; }
+        .sec-hand { stroke: #BC4749; stroke-width: 2; stroke-linecap: round; }
+        .tick-hour { stroke: #F2E8CF; stroke-width: 2.5; }
+        .tick-min { stroke: #F2E8CF; stroke-opacity: 0.3; stroke-width: 1.5; }
         .market-arc { fill: none; stroke-width: 8; stroke-linecap: butt; }
     </style>
 </head>
-<body class="p-2">
-    <header class="mb-4 border-b border-gray-900 pb-2 px-2">
-        <h1 class="text-2xl font-bold">Mercados Globales</h1>
+<body class="p-4">
+    <header class="mb-8 border-b border-[#1a1a1a] pb-4 px-2">
+        <h1 class="text-3xl font-bold tracking-tight">Global Market Watch</h1>
     </header>
 
-    <div id="clock-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2"></div>
+    <div id="clock-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 px-2"></div>
 
     <script>
         const markets = [
-            { name: "NewYork", tz: "America/New_York", open: 9.5, close: 16 },
-            { name: "Europa", tz: "Europe/London", open: 8, close: 16.5 },
-            { name: "Tokio", tz: "Asia/Tokyo", open: 9, close: 15 },
-            { name: "Australia", tz: "Australia/Sydney", open: 10, close: 16 }
+            { name: "NewYork", tz: "America/New_York", open: "09:30", close: "16:00" },
+            { name: "Europa", tz: "Europe/London", open: "08:00", close: "16:30" },
+            { name: "Tokio", tz: "Asia/Tokyo", open: "09:00", close: "15:00" },
+            { name: "Australia", tz: "Australia/Sydney", open: "10:00", close: "16:00" }
         ];
+
+        function timeToDegrees(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return ((h % 12) * 30) + (m * 0.5) - 90;
+        }
 
         function createClocks() {
             const grid = document.getElementById('clock-grid');
             markets.forEach((m, index) => {
                 const card = document.createElement('div');
-                card.className = 'market-card p-4 rounded flex flex-col items-center gap-2';
+                card.className = 'market-card p-6 rounded-2xl flex flex-col items-center gap-3';
                 card.innerHTML = `
                     <div class="clock-container">
-                        <svg class="clock-svg" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet">
-                            <circle cx="40" cy="40" r="36" stroke="#222" stroke-width="8" fill="none"/>
+                        <svg class="w-full h-full" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="36" stroke="#1a1a1a" stroke-width="8" fill="none"/>
                             <path id="arc-${index}" class="market-arc" d=""/>
                             <g id="ticks-${index}"></g>
                             <g id="group-hour-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="20" class="hour-hand"/></g>
                             <g id="group-min-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="12" class="min-hand"/></g>
                             <g id="group-sec-${index}" class="hand-group"><line x1="40" y1="40" x2="40" y2="8" class="sec-hand"/></g>
-                            <circle cx="40" cy="40" r="3" fill="#ef4444"/>
                         </svg>
                     </div>
                     <div class="text-center w-full">
-                        <h2 class="text-[18px] font-bold">${m.name}</h2>
-                        <p class="text-[12px] text-gray-500 uppercase font-semibold">${m.open}:00 - ${m.close}:00</p>
-                        <div id="digital-${index}" class="font-mono text-[22px] font-bold text-gray-200 mt-1">00:00:00</div>
+                        <h2 class="text-xl font-bold">${m.name}</h2>
+                        <p class="text-sm opacity-60 uppercase tracking-widest font-medium">${m.open} - ${m.close}</p>
+                        <div id="digital-${index}" class="text-3xl text-[#F2E8CF] mt-2 tracking-tighter"></div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -89,36 +88,43 @@
         function update() {
             markets.forEach((m, index) => {
                 const now = new Date(new Date().toLocaleString("en-US", { timeZone: m.tz }));
-                const h = now.getHours() + now.getMinutes()/60;
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                const [oH, oM] = m.open.split(':').map(Number);
+                const [cH, cM] = m.close.split(':').map(Number);
+                const isOpen = currentMinutes >= (oH * 60 + oM) && currentMinutes < (cH * 60 + cM);
                 
-                const isOpen = h >= m.open && h < m.close;
                 const arc = document.getElementById(`arc-${index}`);
-                arc.setAttribute("stroke", isOpen ? "#22c55e" : "#ef4444");
-                arc.setAttribute("stroke-opacity", isOpen ? "0.9" : "0.2");
+                arc.setAttribute("stroke", isOpen ? "#A7C957" : "#BC4749");
+                // Opacidad ajustada: 0.72 (abierto) y 0.4 (cerrado)
+                arc.setAttribute("stroke-opacity", isOpen ? "0.72" : "0.4");
+                
+                const startAngle = timeToDegrees(m.open);
+                const endAngle = timeToDegrees(m.close);
+                const angleDiff = endAngle - startAngle;
+                const largeArc = angleDiff > 0 && angleDiff <= 180 ? 0 : 1;
+                
+                arc.setAttribute("d", describeArc(40, 40, 36, startAngle, endAngle, largeArc));
 
-                const startAngle = (m.open * 30) - 90;
-                const endAngle = (m.close * 30) - 90;
-                arc.setAttribute("d", describeArc(40, 40, 36, startAngle, endAngle));
-
-                const hDeg = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-                const mDeg = now.getMinutes() * 6 + now.getSeconds() * 0.1;
-                const sDeg = now.getSeconds() * 6;
-
-                document.getElementById(`group-hour-${index}`).setAttribute('transform', `rotate(${hDeg} 40 40)`);
-                document.getElementById(`group-min-${index}`).setAttribute('transform', `rotate(${mDeg} 40 40)`);
-                document.getElementById(`group-sec-${index}`).setAttribute('transform', `rotate(${sDeg} 40 40)`);
-                document.getElementById(`digital-${index}`).innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                document.getElementById(`group-hour-${index}`).setAttribute('transform', `rotate(${(now.getHours() % 12) * 30 + now.getMinutes() * 0.5} 40 40)`);
+                document.getElementById(`group-min-${index}`).setAttribute('transform', `rotate(${now.getMinutes() * 6 + now.getSeconds() * 0.1} 40 40)`);
+                document.getElementById(`group-sec-${index}`).setAttribute('transform', `rotate(${now.getSeconds() * 6} 40 40)`);
+                
+                const hh = now.getHours().toString().padStart(2, '0');
+                const mm = now.getMinutes().toString().padStart(2, '0');
+                const ss = now.getSeconds().toString().padStart(2, '0');
+                document.getElementById(`digital-${index}`).innerHTML = 
+                    `<span class="tech-font-bold">${hh}:${mm}</span><span class="tech-font-light opacity-70">:${ss}</span>`;
             });
         }
 
-        function describeArc(x, y, r, start, end) {
+        function describeArc(x, y, r, start, end, largeArc) {
             const startR = start * Math.PI / 180;
             const endR = end * Math.PI / 180;
             const x1 = x + r * Math.cos(startR);
             const y1 = y + r * Math.sin(startR);
             const x2 = x + r * Math.cos(endR);
             const y2 = y + r * Math.sin(endR);
-            return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`;
+            return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
         }
 
         createClocks();
